@@ -1,0 +1,137 @@
+CREATE DATABASE IF NOT EXISTS Hospital_Analytics;
+USE Hospital_Analytics;
+
+CREATE TABLE Patients (
+    patient_id INT PRIMARY KEY AUTO_INCREMENT,
+    p_name VARCHAR(50) NOT NULL,
+    age INT not null check(age>0),
+    gender VARCHAR(10),
+    city VARCHAR(50)
+);
+
+CREATE TABLE Doctors (
+    doctor_id INT PRIMARY KEY AUTO_INCREMENT,
+    d_name VARCHAR(50) NOT NULL,
+    speciality VARCHAR(50), 
+    experience_years INT
+);
+
+CREATE TABLE Admissions (
+    admission_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    doctor_id INT,
+    admission_date DATE,
+    discharge_date DATE,
+    diagnosis VARCHAR(100),
+    total_bill DECIMAL(10, 2), -- 10 digits total, 2 after decimal
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id)
+);
+
+
+INSERT INTO Doctors (d_name, speciality, experience_years) VALUES 
+('Dr. Sharma', 'Cardiology', 15),
+('Dr. Kapoor', 'Neurology', 10),
+('Dr. bhatt', 'Orthopedic', 12),
+('Dr. Reddy', 'Pediatrics', 8),
+('Dr. Mehra', 'Cardiology', 20);
+
+
+INSERT INTO Patients (p_name, age, gender, city) VALUES 
+('Rajat Bhatt', 23, 'Male', 'Delhi'),
+('Aman Verma', 65, 'Male', 'Mumbai'),
+('Priya Singh', 45, 'Female', 'Delhi'),
+('Suresh Raina', 72, 'Male', 'Bangalore'),
+('Anjali Dua', 12, 'Female', 'Pune'),
+('Vikram Seth', 58, 'Male', 'Mumbai'),
+('Sonia Gandhi', 68, 'Female', 'Delhi');
+
+
+INSERT INTO Admissions (patient_id, doctor_id, admission_date, discharge_date, diagnosis, total_bill) VALUES 
+(1, 1, '2026-01-10', '2026-01-15', 'Heart Valve Check', 12000.00),
+(2, 5, '2026-01-12', '2026-01-20', 'Heart Attack', 95000.00),
+(3, 2, '2026-02-01', '2026-02-05', 'Migraine', 8000.00),
+(4, 3, '2026-02-10', '2026-02-15', 'Knee Surgery', 55000.00),
+(5, 4, '2026-02-15', '2026-02-18', 'Viral Fever', 3000.00),
+(6, 2, '2026-03-01', '2026-03-05', 'Brain Stroke', 120000.00),
+(7, 1, '2026-03-05', '2026-03-10', 'High BP', 15000.00);
+
+
+
+ALTER TABLE Admissions ADD COLUMN status VARCHAR(20) DEFAULT 'Discharged';
+UPDATE Admissions SET status = 'Admitted' WHERE admission_id IN (6, 7);
+
+
+
+
+-- query
+SELECT 
+    d.d_name AS Doctor_Name, 
+    d.speciality, 
+    SUM(a.total_bill) AS Total_Revenue
+FROM Doctors d
+JOIN Admissions a ON d.doctor_id = a.doctor_id
+GROUP BY d.d_name, d.speciality
+ORDER BY Total_Revenue DESC;
+
+
+SELECT 
+    city, 
+    COUNT(patient_id) AS Number_of_Patients
+FROM Patients
+GROUP BY city
+ORDER BY Number_of_Patients DESC;
+
+SELECT 
+    SUM(total_bill) AS Total_Bill_Seniors
+FROM Admissions a
+JOIN Patients p ON a.patient_id = p.patient_id
+WHERE p.age > 50;
+
+SELECT 
+    p.p_name AS Patient_Name, 
+    a.total_bill, 
+    d.d_name AS Doctor_Name
+FROM Patients p
+JOIN Admissions a ON p.patient_id = a.patient_id
+JOIN Doctors d ON a.doctor_id = d.doctor_id
+WHERE a.total_bill > 50000;
+
+
+SELECT 
+    diagnosis, 
+    AVG(total_bill) AS Average_Cost,
+    COUNT(*) AS Total_Cases
+FROM Admissions
+GROUP BY diagnosis
+ORDER BY Average_Cost DESC;
+
+select 
+     p.p_name,
+     p.city,
+     a.total_bill
+from patients p
+join admissions a on p.patient_id = a.patient_id
+where a.total_bill < 20000;
+
+
+select 
+     d.d_name AS Doctor_Name,d.doctor_id,
+     count(*) AS Total_Cases
+from doctors d
+join admissions a on d.doctor_id = a.doctor_id
+group by a.doctor_id,d.d_name
+order by Total_Cases desc
+limit 3;
+
+
+
+CREATE OR REPLACE VIEW Doctor_Specific_Day_Revenue AS
+SELECT 
+    d.d_name AS Doctor_Name,
+    SUM(a.total_bill) AS Doctor_Earnings,
+    COUNT(a.admission_id) AS Patients_Treated
+FROM Doctors d
+JOIN Admissions a ON d.doctor_id = a.doctor_id
+WHERE a.admission_date = '2026-03-05' 
+GROUP BY d.doctor_id, d.d_name;

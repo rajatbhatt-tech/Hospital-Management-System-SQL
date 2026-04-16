@@ -1,6 +1,6 @@
 /* Project: Hospital Operations Analytics
    Created by: [RAJAT BHATT]
-   Description: This script manages patient records, doctor assignments, and billing reports.
+   Description: This script manages patient records, doctor assignments, and billing reports
 */
 
 CREATE DATABASE IF NOT EXISTS Hospital_Analytics;
